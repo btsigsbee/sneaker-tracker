@@ -11,7 +11,7 @@ function Sneaker(props){
     const sneaks = sneakieInfo.props.map((si )=> 
 <div className='container' key={si._id}>
     <h4 >{si.name}</h4>
-    <img fluid='true' className='h-50 w-50'src={si.imgUrl}></img>
+    <img fluid='true' className='h-50 w-50'src={si.imgUrl} alt='not found'/>
 
 
 </div>
@@ -41,8 +41,6 @@ class Homeboard extends React.Component{
             .then(res=> this.setState({
                 sneakers: res.data
             }))
-            
-
             .catch(err => console.log(err))
 
             

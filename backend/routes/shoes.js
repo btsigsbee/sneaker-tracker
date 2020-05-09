@@ -3,24 +3,50 @@ let Shoe = require('../models/shoe.model');
 const stockxAPI = require('stockx-api');
 const stockX = new stockxAPI();
 
-
+function getStockX(object){
+    var urlP = 'https://stockx.com/';
+    
+    var Z= stockX.fetchProductDetails(urlP + Object.keys(object))
+    .then(data =>{return data.variants.filter(function(x){
+        return x.size == Object.values(object);
+    });
+})
+    .catch(err => {return err});
+    return Z;
+}
 router.route('/').get((req,res) =>{
     Shoe.find()
     .then(shoes => res.json(shoes))
     .catch(err=> res.status(400).json('Error: '+err));
 });
 router.route('/get/:username').get((req, res)=>{
-    
+    var arr=[];
     Shoe.find({username: req.params.username})
-    .then(shoeData =>{
-        for(i=0; i<shoeData.length; i++){
-            console.log(shoeData[i]);
+    .then(shoeData =>{ 
+        for( var i in shoeData){
+            var myObj= {};
+
+            
+            var fixedDigit = parseFloat(shoeData[i].size);
+            myObj[shoeData[i].urlName] = fixedDigit;
+            var Z= getStockX(myObj)
+            .then(data => {console.log(data);
+            });
+             
+            
+            
+
+
             
         }
+        console.log(shoeData);
 
+        res.json(shoeData);
+               
     })
+      
     .catch(err=> res.status(400).json('Error: '+err));
-
+    
 });
 router.route('/:id').delete((req,res)=>{
     Shoe.findByIdAndDelete(req.params.id)
