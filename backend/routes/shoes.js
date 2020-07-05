@@ -5,7 +5,6 @@ const stockX = new stockxAPI();
 
 function getStockX(object){
     var urlP = 'https://stockx.com/';
-    
     var Z= stockX.fetchProductDetails(urlP + Object.keys(object))
     .then(data =>{return data.variants.filter(function(x){
         return x.size == Object.values(object);
@@ -14,44 +13,62 @@ function getStockX(object){
     .catch(err => {return err});
     return Z;
 }
+ 
 router.route('/').get((req,res) =>{
     Shoe.find()
     .then(shoes => res.json(shoes))
     .catch(err=> res.status(400).json('Error: '+err));
 });
 router.route('/get/:username').get((req, res)=>{
-    var arr=[];
+    var obj =[];
     Shoe.find({username: req.params.username})
-    .then(shoeData =>{ 
+    .then(async shoeData =>{ 
         for( var i in shoeData){
             var myObj= {};
-
             
             var fixedDigit = parseFloat(shoeData[i].size);
             myObj[shoeData[i].urlName] = fixedDigit;
-            var Z= getStockX(myObj)
-            .then(data => {console.log(data);
-            });
-             
             
-            
-
-
-            
-        }
-        console.log(shoeData);
-
-        res.json(shoeData);
-               
+            await getStockX(myObj)
+            .then(data => {
+                data=data[0]
+                data['name'] = shoeData[i].name;
+                data['imgUrl'] = shoeData[i].imgUrl;
+                data['_id'] = shoeData[i]._id;
+                
+                
+                obj.push(data);
+                       
+})            
+          } 
+          res.json(obj)   
+   
     })
-      
+     
     .catch(err=> res.status(400).json('Error: '+err));
     
 });
-router.route('/:id').delete((req,res)=>{
-    Shoe.findByIdAndDelete(req.params.id)
-    .then(()=>res.json('Shoe deleted.'))
-    .catch(err => res.status(400).json('Error: '+ err));
+router.route('/:id').delete((req,res, next)=>{
+    Shoe.findByIdAndRemove(req.params.id, (error, data) =>{
+        if (error){
+            return next(error);
+        }else{
+            res.status(200).json('shoe deleted')
+        }
+    })})
+
+
+
+
+router.route('/search/:q').get((req,res)=>{
+    var results = [];
+    stockX.searchProducts(req.params.q, {
+        limit: 5
+    })
+    .then(data => res.json(data))
+    .catch(err=> res.json(err));
+
+    
 
 });
 
